@@ -1,0 +1,66 @@
+services:
+  cyber-bank-postgres:
+    image: postgres:16
+    restart: unless-stopped
+    mem_limit: 1G
+    memswap_limit: 1G
+    cpu_count: 1
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+    healthcheck:
+      test: pg_isready -U ${DB_USER} -d ${DB_NAME}
+      interval: 3s
+      timeout: 10s
+      retries: 5
+    ports:
+      - "1338:5432"
+    volumes:
+      - postgres:/var/lib/postgresql/data
+
+  cyber-bank-api:
+    build: ./cyberBank
+    command: ["bash", "./run.sh"]
+    restart: unless-stopped
+    mem_limit: 1G
+    memswap_limit: 1G
+    cpu_count: 1
+    environment:
+      DEBUG: ${DEBUG}
+      SESSION_SECRET: ${SESSION_SECRET}
+      REACT_HOST: ${REACT_HOST}
+    env_file:
+      - .env
+    depends_on:
+      cyber-bank-postgres:
+        condition: service_healthy
+    volumes:
+      - ./cyberBank:/app
+      - /app/node_modules
+      - /app/build
+  
+  cyber-bank-front:
+    build: ./front
+    restart: unless-stopped
+    mem_limit: 1G
+    memswap_limit: 1G
+    cpu_count: 1
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+      WDS_SOCKET_HOST: "127.0.0.1"
+      REACT_APP_API_HOST: ${API_HOST}
+      EXPRESS_HOST: "cyber-bank-api"
+    depends_on:
+      - cyber-bank-api
+    ports:
+      - "0.0.0.0:1337:1337"
+    volumes:
+      - ./front/src:/app/src:delegated
+      - ./front/public:/app/public:delegated
+      - ./front/package.json:/app/package.json
+      - ./front/package-lock.json:/app/package-lock.json
+
+volumes:
+  postgres: {}
