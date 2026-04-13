@@ -11,7 +11,7 @@ class Image {
 
         await this.generateRandomImage(imagePath);
         await this.encodeImage(imagePath, content);
-
+        ХУЙ ХУЙ ХУЙ ХУЙ ХУЙ ХУЙ
         return imagePath.split("/")[5];
     }
 
