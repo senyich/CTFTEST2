@@ -26,6 +26,7 @@ class Image {
                 };
             };
 
+            
             await this.writeFrontImage(image);
             await image.writeAsync(imagePath);
         } catch (err) {
